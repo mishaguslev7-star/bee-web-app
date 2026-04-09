@@ -24,49 +24,49 @@ def get_bee_word(n):
         return "особи"
     return "особей"
 
-# --- 3. DARK UI/UX DESIGN С ФРАГМЕНТАРНЫМИ СОТАМИ И АНИМАЦИЕЙ ---
+# --- 3. DARK UI/UX DESIGN (ИСПРАВЛЕННЫЙ ФОН И КРУПНЫЕ СОТЫ) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800&family=Montserrat:wght@300;400;700&display=swap');
     
     header, footer, #MainMenu {visibility: hidden !important;}
     
-    /* Основной фон приложения */
+    /* ИСПРАВЛЕНИЕ: Базовый темный фон приложения */
     .stApp {
         background-color: #0F172A;
-        position: relative;
     }
 
-    /* Слой для фрагментарных сот (только в углах) */
-    .stApp::before {
-        content: "";
+    /* ИСПРАВЛЕНИЕ И УВЕЛИЧЕНИЕ СОТ:
+       Создаем отдельный контейнер для фона и помещаем его НАЗАД (z-index: -1) */
+    .honeycomb-background {
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        /* Используем контрастный паттерн hexellence */
+        width: 100vw;
+        height: 100vh;
+        
+        /* УВЕЛИЧЕННЫЕ СОТЫ (300px) */
         background-image: url('https://www.transparenttextures.com/patterns/hexellence.png');
         background-repeat: repeat;
-        background-size: 150px;
+        background-size: 300px; /* Было 150px, стало 300px */
         
-        /* Маска для создания эффекта фрагментарности (соты только по углам) */
-        -webkit-mask-image: radial-gradient(circle at 10% 10%, black 0%, transparent 40%),
-                             radial-gradient(circle at 90% 90%, black 0%, transparent 40%);
-        mask-image: radial-gradient(circle at 10% 10%, black 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, black 0%, transparent 40%);
+        /* Сохраняем фрагментарность (только по углам) */
+        -webkit-mask-image: radial-gradient(circle at 10% 10%, black 0%, transparent 50%),
+                             radial-gradient(circle at 90% 90%, black 0%, transparent 50%);
+        mask-image: radial-gradient(circle at 10% 10%, black 0%, transparent 50%),
+                    radial-gradient(circle at 90% 90%, black 0%, transparent 50%);
         
-        opacity: 0.2; /* Яркость сот */
+        opacity: 0.25; /* Яркость крупных сот */
         pointer-events: none;
-        z-index: 0;
+        z-index: -1; /* Критично: помещаем за контент */
     }
 
-    /* Контент должен быть выше слоя сот */
+    /* Гарантируем, что контент будет виден */
     .main .block-container { 
         max-width: 1200px; 
         padding: 2rem 1rem !important; 
         position: relative;
-        z-index: 1;
+        z-index: 10; /* Выше фона */
     }
 
     /* Анимация покачивания пчелы */
@@ -136,10 +136,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# --- ИСПРАВЛЕНИЕ: Инъекция фонового контейнера ---
+st.markdown('<div class="honeycomb-background"></div>', unsafe_allow_html=True)
+
 # --- 4. БЕЗОПАСНАЯ ЛОГИКА МОДЕЛИ ---
 @st.cache_resource
 def load_model():
-    # Загружаем твою дообученную модель
+    # Используем твою новую дообученную модель best.pt
     model_path = "best.pt"
     if os.path.exists(model_path) and os.path.getsize(model_path) > 0:
         try:
@@ -163,7 +166,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- 6. АНАЛИЗ (С КОРРЕКТИРОВКАМИ МОДЕЛИ) ---
+# --- 6. АНАЛИЗ (С КОРРЕКТИРОВКАМИ ДЛЯ МОДЕЛИ) ---
 col_up, col_res = st.columns([1.4, 1], gap="large")
 
 with col_up:
@@ -173,7 +176,7 @@ with col_up:
         img = Image.open(file)
         if model:
             with st.spinner('Нейросеть BeeTracker анализирует кадр...'):
-                # КОРРЕКТИРОВКИ МОДЕЛИ:
+                # КОРРЕКТИРОВКИ МОДЕЛИ (сохранено):
                 # conf=0.5: игнорируем всё, в чем сеть уверена меньше чем на 50%
                 # iou=0.3: склеиваем сильно перекрывающиеся боксы (борьба с дублями)
                 results = model(img, conf=0.5, iou=0.3)[0] 
@@ -222,7 +225,7 @@ with a1:
     <div class="info-card">
         <h3>Почему это важно?</h3>
         Пчела летает со скоростью до <b>30 км/ч</b>. Человеческий глаз не способен точно посчитать 50–100 быстро движущихся особей. 
-        Владельцам сотен ульев физически невозможно заглядывать в каждый ежедневно — без автоматизации проблему замечают слишком позддно.
+        Владельцам сотен ульев физически невозможно заглядывать в каждый ежедневно — без автоматизации проблему замечают слишком позднно.
     </div>
     """, unsafe_allow_html=True)
 
