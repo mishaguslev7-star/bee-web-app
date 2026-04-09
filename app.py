@@ -4,156 +4,150 @@ from PIL import Image
 import numpy as np
 import cv2
 
-# Настройка страницы в стиле "Научная вселенная Первых"
+# Настройка страницы
 st.set_page_config(
-    page_title="BeeTraker AI — Пчелиный учёт",
+    page_title="BeeTraker AI",
     page_icon="🐝",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# --- УЛУЧШЕННЫЙ ДИЗАЙН И АНИМАЦИИ ---
+# --- ПОЛНОЕ СКРЫТИЕ ИНТЕРФЕЙСА И СТИЛИЗАЦИЯ ---
 st.markdown("""
     <style>
-    /* Скрытие служебных элементов */
+    /* Скрываем вообще всё лишнее: хедер, футер, кнопки */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
-
-    /* Анимация появления */
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    div[data-testid="stToolbar"] {display: none;}
+    section[data-testid="stSidebar"] {display: none;}
+    
+    /* Убираем лишние отступы сверху */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
     }
 
-    /* Основной фон — темно-синий из презентации */
+    /* Фон и анимация */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
     .stApp { 
         background-color: #0a192f; 
         color: #e6f1ff;
-        animation: fadeInUp 1s ease-out;
+        animation: fadeIn 1.5s ease-in;
     }
     
-    /* Золотистые заголовки */
+    /* Заголовки в стиле презентации */
     h1, h2, h3 { 
         color: #facc15 !important; 
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: 'Segoe UI', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
-    /* Стилизация карточек с информацией */
+    /* Карточки-контейнеры */
+    .reportview-container .main .block-container {
+        max-width: 1200px;
+    }
+    
     .info-card {
         background-color: #112240;
         border: 1px solid #233554;
-        border-radius: 15px;
+        border-radius: 12px;
         padding: 20px;
-        margin-bottom: 20px;
-        transition: transform 0.3s ease, border-color 0.3s ease;
+        height: 100%;
+        transition: 0.3s;
     }
     .info-card:hover {
-        transform: translateY(-5px);
         border-color: #facc15;
+        background-color: #172a45;
     }
 
-    /* Кнопка загрузки */
-    .stFileUploader section {
-        background-color: #112240 !important;
-        border: 2px dashed #facc15 !important;
-        border-radius: 15px !important;
+    /* Стилизация метрики */
+    [data-testid="stMetricValue"] {
+        color: #facc15 !important;
+        font-size: 3rem !important;
     }
-
-    /* Метрики */
-    [data-testid="stMetricValue"] { color: #facc15 !important; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
-# Загрузка модели YOLO11
+# Загрузка YOLO11
 @st.cache_resource
 def load_model():
-    try:
-        # Загружаем твою модель best.pt
-        model = YOLO("best.pt")
-        return model
-    except Exception as e:
-        st.error(f"Ошибка загрузки модели: {e}")
-        return None
+    return YOLO("best.pt")
 
 model = load_model()
 
-# --- ВЕРХНЯЯ ПАНЕЛЬ (ЛОГО И ЗАГОЛОВОК) ---
-st.markdown('<h1 style="text-align: center;">🐝 BeeTraker AI</h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align: center; font-size: 1.2rem;">Наш проект превращает хаотичное движение пчел в ценные данные</p>', unsafe_allow_html=True)
+# --- ШАПКА ---
+st.markdown('<h1 style="text-align: center;">🐝 BEETRAKER AI</h1>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; color: #8892b0;">Интеллектуальный анализ активности пчёл • Научная вселенная Первых</p>', unsafe_allow_html=True)
 
-st.markdown("---")
+# --- ОСНОВНОЙ ФУНКЦИОНАЛ ---
+st.markdown("### 🛠 Анализатор пчёл")
+col_up, col_info = st.columns([1.5, 1])
 
-# --- ОСНОВНОЙ БЛОК: АНАЛИЗ ---
-col_left, col_right = st.columns([1.5, 1])
-
-with col_left:
-    st.markdown("### 📸 Загрузка данных")
-    uploaded_file = st.file_uploader("Загрузите фото рамки", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
-
-if uploaded_file is not None and model is not None:
+with col_up:
+    uploaded_file = st.file_uploader("Загрузите фото", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
+    
+if uploaded_file:
     image = Image.open(uploaded_file)
     img_array = np.array(image)
 
-    with st.spinner('Нейросеть YOLO11 анализирует кадр...'):
-        # Предсказание: отключаем маски (masks=False), чтобы убрать синие пятна
+    with st.spinner('Анализ YOLO11...'):
         results = model(img_array)[0]
+        # masks=False убирает синие дефекты сегментации
         annotated_img = results.plot(masks=False, kpts=False, probs=False)
         annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
         bee_count = len(results.boxes)
 
-    with col_left:
-        st.image(annotated_img, caption="Результат распознавания", use_container_width=True)
-
-    with col_right:
-        st.markdown("### 📊 Статистика")
-        st.metric(label="Найдено пчел на рамке", value=f"{bee_count} шт.")
-        st.success("Анализ завершен. Данные готовы для мониторинга.")
-        
-        st.markdown("""
+    with col_up:
+        st.image(annotated_img, use_container_width=True)
+    
+    with col_info:
+        st.metric("Обнаружено особей", f"{bee_count} шт.")
+        st.success("Объекты зафиксированы")
+        st.markdown(f"""
         <div class="info-card">
-        <strong>Точность:</strong> Использование YOLO11 обеспечивает высокую скорость и фиксацию объектов, которые трудно заметить человеческим глазом.
+        <strong>Техническая сводка:</strong><br>
+        Модель: YOLO11<br>
+        Статус: Работа в полевых условиях<br>
+        Локация: Пермский край 
         </div>
         """, unsafe_allow_html=True)
 else:
-    with col_right:
-        st.info("Ожидание изображения для начала учёта...")
+    with col_info:
+        st.info("Для начала работы загрузите фотографию рамки или летка.")
 
-st.markdown("---")
+st.markdown("<br><hr><br>", unsafe_allow_html=True)
 
-# --- ИНФОРМАЦИОННЫЙ БЛОК (ИЗ ПРЕЗЕНТАЦИИ) ---
-st.markdown("## 🔬 О проекте")
-
+# --- ИНФОРМАЦИЯ ИЗ ПРЕЗЕНТАЦИИ ---
+st.markdown("## 🔬 О ПРОЕКТЕ")
 c1, c2, c3 = st.columns(3)
 
 with c1:
-    st.markdown(f"""
+    st.markdown("""
     <div class="info-card">
     <h3>📢 Актуальность</h3>
-    Владельцам сотен ульев физически невозможно заглядывать в каждый улей ежедневно. 
-    BeeTraker позволяет заметить проблему до того, как колония погибнет полностью.
+    Пчела движется со скоростью до 30 км/ч. Человеческий глаз не способен точно посчитать 50-100 особей мгновенно.
     </div>
     """, unsafe_allow_html=True)
 
 with c2:
-    st.markdown(f"""
+    st.markdown("""
     <div class="info-card">
     <h3>💡 Решение</h3>
-    Веб-сайт автоматически распознаёт и отслеживает пчёл. Система заменяет многочасовой ручной труд 
-    и обеспечивает доступность мониторинга для каждого.
+    Разработка заменяет многочасовой ручной труд и позволяет вовремя заметить экологическую угрозу.
     </div>
     """, unsafe_allow_html=True)
 
 with c3:
-    st.markdown(f"""
+    st.markdown("""
     <div class="info-card">
-    <h3>🚀 Перспективы</h3>
-    Оптимизация нейросети и переход на новые версии YOLO для работы на высоких скоростях. 
-    Дообучение модели для распознавания болезней.
+    <h3>🎯 Цель</h3>
+    Предотвращение коллапса пчелиных семей и помощь ученым, фермерам и биологам.
     </div>
     """, unsafe_allow_html=True)
 
-# Нижний колонтитул
-st.markdown(
-    '<p style="text-align: center; color: #8892b0; margin-top: 50px;">Всероссийский фестиваль "Научная вселенная Первых" • Пермский край</p>', 
-    unsafe_allow_html=True
-)
+st.markdown('<p style="text-align: center; margin-top: 40px; color: #495670;">Михаил Гуслев, Лев Лебедянцев • СОШ Лицей ПГГПУ </p>', unsafe_allow_html=True)
