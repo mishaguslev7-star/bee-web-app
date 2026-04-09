@@ -4,133 +4,156 @@ from PIL import Image
 import numpy as np
 import cv2
 
-# Настройка страницы (дизайн)
+# Настройка страницы в стиле "Научная вселенная Первых"
 st.set_page_config(
-    page_title="BeeTraker AI: Профессиональный подсчет пчел",
+    page_title="BeeTraker AI — Пчелиный учёт",
     page_icon="🐝",
     layout="wide"
 )
 
-# --- БЛОК АНИМАЦИИ И КАСТОМНОГО ДИЗАЙНА ---
-# Мы добавляем CSS-анимацию keyframes и скрываем лишние элементы GitHub
+# --- УЛУЧШЕННЫЙ ДИЗАЙН И АНИМАЦИИ ---
 st.markdown("""
     <style>
-    /* 1. Скрываем меню Streamlit и кнопку GitHub */
+    /* Скрытие служебных элементов */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* 2. Общая анимация появления для всех элементов */
-    @keyframes fadeInDown {
-        from { opacity: 0; transform: translate3d(0, -20px, 0); }
-        to { opacity: 1; transform: translate3d(0, 0, 0); }
+    /* Анимация появления */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Основной фон — темно-синий из презентации */
     .stApp { 
-        background-color: #0f172a; color: white; 
-        animation: fadeInDown 1.2s ease-out; /* Плавное появление всего сайта */
+        background-color: #0a192f; 
+        color: #e6f1ff;
+        animation: fadeInUp 1s ease-out;
     }
     
-    /* 3. Стилизация заголовков и текста */
-    h1, h2, h3 { color: #facc15; font-family: 'Inter', sans-serif; font-weight: 800; }
-    .stMarkdown p { color: #a1a1aa; font-size: 1.1rem; }
-    
-    /* 4. Стилизация карточек Проблема/Решение/Цель с тенью и анимацией ховера */
-    .css-163rgbv, [data-testid="stVerticalBlock"] > div > div > [data-testid="stMarkdownContainer"] {
-        background-color: #1e293b; 
-        border-radius: 20px; 
-        padding: 25px; 
-        border: 1px solid #334155;
-        transition: all 0.3s ease;
+    /* Золотистые заголовки */
+    h1, h2, h3 { 
+        color: #facc15 !important; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .css-163rgbv:hover {
-        transform: translateY(-5px); /* Карточка немного приподнимается */
-        box-shadow: 0 10px 20px rgba(250, 204, 21, 0.2); /* Появляется золотистое свечение */
+
+    /* Стилизация карточек с информацией */
+    .info-card {
+        background-color: #112240;
+        border: 1px solid #233554;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: transform 0.3s ease, border-color 0.3s ease;
     }
-    
-    /* 5. Стилизация метрики (числа пчел) */
-    [data-testid="stMetricValue"] { color: #facc15; font-size: 3.5rem !important; font-weight: 800; }
-    [data-testid="stMetricLabel"] { color: #a1a1aa !important; font-size: 1.1rem; }
-    
-    /* 6. Плавное появление кнопок и инпутов */
-    .stButton, .stFileUploader { animation: fadeInDown 1.5s ease-out; }
-    
+    .info-card:hover {
+        transform: translateY(-5px);
+        border-color: #facc15;
+    }
+
+    /* Кнопка загрузки */
+    .stFileUploader section {
+        background-color: #112240 !important;
+        border: 2px dashed #facc15 !important;
+        border-radius: 15px !important;
+    }
+
+    /* Метрики */
+    [data-testid="stMetricValue"] { color: #facc15 !important; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- ИНИЦИАЛИЗАЦИЯ (Кешируем модель) ---
+# Загрузка модели YOLO11
 @st.cache_resource
 def load_model():
     try:
-        model = YOLO("best.pt") # Убедись, что файл best.pt лежит рядом
+        # Загружаем твою модель best.pt
+        model = YOLO("best.pt")
         return model
     except Exception as e:
-        st.error(f"Ошибка загрузки модели. Убедитесь, что 'best.pt' лежит в папке GitHub. Подробнее: {e}")
+        st.error(f"Ошибка загрузки модели: {e}")
         return None
 
 model = load_model()
 
-# --- ВЕРХНЯЯ ЧАСТЬ: ИНТЕРФЕЙС АНАЛИЗА ---
-st.title("🐝 BeeTraker AI")
-st.write("Профессиональный инструмент для мгновенного и точного подсчета пчел на рамке.")
+# --- ВЕРХНЯЯ ПАНЕЛЬ (ЛОГО И ЗАГОЛОВОК) ---
+st.markdown('<h1 style="text-align: center;">🐝 BeeTraker AI</h1>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; font-size: 1.2rem;">Наш проект превращает хаотичное движение пчел в ценные данные</p>', unsafe_allow_html=True)
 
-# Создаем две колонки: слева загрузка, справа результат
-col_upload, col_result = st.columns([1.5, 1])
+st.markdown("---")
 
-with col_upload:
-    st.subheader("📁 Загрузите изображение")
-    uploaded_file = st.file_uploader("Выберите фото рамки (JPG, PNG)...", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
-    
-    if uploaded_file is None:
-        st.info("Пожалуйста, загрузите фотографию для начала анализа.")
+# --- ОСНОВНОЙ БЛОК: АНАЛИЗ ---
+col_left, col_right = st.columns([1.5, 1])
+
+with col_left:
+    st.markdown("### 📸 Загрузка данных")
+    uploaded_file = st.file_uploader("Загрузите фото рамки", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
 
 if uploaded_file is not None and model is not None:
-    # 1. Загрузка фото
     image = Image.open(uploaded_file)
     img_array = np.array(image)
 
-    # 2. РАБОТА НЕЙРОСЕТИ (реальное предсказание)
-    with st.spinner('Нейросеть YOLO анализирует изображение...'):
+    with st.spinner('Нейросеть YOLO11 анализирует кадр...'):
+        # Предсказание: отключаем маски (masks=False), чтобы убрать синие пятна
         results = model(img_array)[0]
-        
-        # 3. ПОСТ-ОБРАБОТКА (Рисуем рамки)
-        annotated_img = results.plot() 
-        # Конвертируем цвета (из BGR в RGB)
+        annotated_img = results.plot(masks=False, kpts=False, probs=False)
         annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
-        # Считаем количество пчел
         bee_count = len(results.boxes)
 
-    # 4. ВЫВОД РЕЗУЛЬТАТОВ (в правую колонку)
-    with col_upload:
-        st.image(annotated_img, caption=f"Обработано AI. Найдено {bee_count} пчел.", use_container_width=True)
+    with col_left:
+        st.image(annotated_img, caption="Результат распознавания", use_container_width=True)
 
-    with col_result:
-        st.subheader("📊 Результат анализа")
-        # Красивая карточка с числом пчел
-        st.metric(label="Обнаружено объектов (пчел)", value=f"{bee_count} шт.")
-        st.success(f"Анализ завершен успешно! Нейросеть YOLO {model.ckpt.get('version', '')} выполнила подсчет.")
+    with col_right:
+        st.markdown("### 📊 Статистика")
+        st.metric(label="Найдено пчел на рамке", value=f"{bee_count} шт.")
+        st.success("Анализ завершен. Данные готовы для мониторинга.")
+        
+        st.markdown("""
+        <div class="info-card">
+        <strong>Точность:</strong> Использование YOLO11 обеспечивает высокую скорость и фиксацию объектов, которые трудно заметить человеческим глазом.
+        </div>
+        """, unsafe_allow_html=True)
+else:
+    with col_right:
+        st.info("Ожидание изображения для начала учёта...")
 
-st.markdown("---") # Разделительная линия
+st.markdown("---")
 
-# --- НИЖНЯЯ ЧАСТЬ: ИНФОРМАЦИЯ О ПРОЕКТЕ (сразу на главной) ---
-st.header("💡 О проекте BeeTraker")
+# --- ИНФОРМАЦИОННЫЙ БЛОК (ИЗ ПРЕЗЕНТАЦИИ) ---
+st.markdown("## 🔬 О проекте")
 
-# Создаем три колонки для красивых карточек
-col_info1, col_info2, col_info3 = st.columns(3)
+c1, c2, c3 = st.columns(3)
 
-with col_info1:
-    st.markdown("""
-    ### ⚠️ Проблема
-    Ручной подсчет пчел на рамках — это трудоемкий, долгий и неточный процесс. При большом количестве ульев на пасеке пчеловод физически не успевает контролировать силу каждой семьи, что может привести к гибели колоний от болезней или голода.
-    """)
+with c1:
+    st.markdown(f"""
+    <div class="info-card">
+    <h3>📢 Актуальность</h3>
+    Владельцам сотен ульев физически невозможно заглядывать в каждый улей ежедневно. 
+    BeeTraker позволяет заметить проблему до того, как колония погибнет полностью.
+    </div>
+    """, unsafe_allow_html=True)
 
-with col_info2:
-    st.markdown("""
-    ### ⚡️ Решение
-    BeeTraker AI использует передовую нейросеть **YOLO**, обученную на тысячах снимков пчел. Наша система за секунды анализирует фотографию рамки, рисует рамку вокруг каждой пчелы и выдает точное количество объектов.
-    """)
+with c2:
+    st.markdown(f"""
+    <div class="info-card">
+    <h3>💡 Решение</h3>
+    Веб-сайт автоматически распознаёт и отслеживает пчёл. Система заменяет многочасовой ручной труд 
+    и обеспечивает доступность мониторинга для каждого.
+    </div>
+    """, unsafe_allow_html=True)
 
-with col_info3:
-    st.markdown("""
-    ### 🎯 Цель
-    Автоматизировать мониторинг активности пчелиных семей. Это позволяет пчеловодам объективно оценивать динамику развития колоний, вовремя выявлять проблемы и принимать меры для предотвращения гибели пчел, повышая эффективность пасеки.
-    """)
+with c3:
+    st.markdown(f"""
+    <div class="info-card">
+    <h3>🚀 Перспективы</h3>
+    Оптимизация нейросети и переход на новые версии YOLO для работы на высоких скоростях. 
+    Дообучение модели для распознавания болезней.
+    </div>
+    """, unsafe_allow_html=True)
+
+# Нижний колонтитул
+st.markdown(
+    '<p style="text-align: center; color: #8892b0; margin-top: 50px;">Всероссийский фестиваль "Научная вселенная Первых" • Пермский край</p>', 
+    unsafe_allow_html=True
+)
