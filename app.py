@@ -5,7 +5,7 @@ import cv2
 
 st.set_page_config(page_title="BeeTraker AI", page_icon="🐝", layout="wide")
 
-# --- СТИЛЬ (БЕЗ ЛОМАЮЩИХ ШТУК) ---
+# --- ЧИСТЫЙ ПРЕМИУМ СТИЛЬ ---
 st.markdown("""
 <style>
 #MainMenu {visibility: hidden;}
@@ -17,36 +17,36 @@ header {visibility: hidden;}
     color: white;
 }
 
-/* Заголовок */
+/* HERO */
 .hero {
     text-align: center;
-    padding: 40px 0;
+    padding: 60px 0 30px 0;
 }
 .hero h1 {
-    font-size: 60px;
+    font-size: 64px;
+    font-weight: 800;
     background: linear-gradient(90deg, #facc15, #fde68a);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 .hero p {
+    font-size: 20px;
     color: #cbd5f5;
-    font-size: 18px;
 }
 
-/* Карточки */
+/* КАРТОЧКИ */
 .card {
-    background: rgba(30, 41, 59, 0.6);
+    background: rgba(30, 41, 59, 0.7);
     padding: 25px;
-    border-radius: 20px;
+    border-radius: 18px;
     border: 1px solid #334155;
-    margin-bottom: 20px;
 }
 
-/* Разделитель */
+/* РАЗДЕЛИТЕЛЬ */
 .divider {
     height: 1px;
     background: #334155;
-    margin: 30px 0;
+    margin: 40px 0;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -66,24 +66,23 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ✅ НОРМАЛЬНАЯ КНОПКА (Streamlit)
-if st.button("🚀 Попробовать"):
-    st.session_state.scroll = True
+# КНОПКА (реальная)
+st.button("🚀 Попробовать")
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# --- ДЕМО ---
-col1, col2 = st.columns([2, 1])
+# --- ОСНОВНОЙ БЛОК (БЕЗ ПУСТОТЫ) ---
+col1, col2 = st.columns([2, 1], gap="large")
 
 with col1:
     st.markdown('<div class="card">', unsafe_allow_html=True)
 
-    file = st.file_uploader("Загрузите изображение", type=['jpg','png','jpeg'])
+    file = st.file_uploader("📂 Загрузите изображение", type=['jpg','png','jpeg'])
 
     if file:
         img = Image.open(file)
 
-        with st.spinner("Анализ..."):
+        with st.spinner("ИИ анализирует изображение..."):
             results = model(img)[0]
             annotated = results.plot()
             annotated = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
@@ -97,32 +96,51 @@ with col2:
     st.markdown('<div class="card">', unsafe_allow_html=True)
 
     if file:
-        st.metric("🐝 Пчёл", count)
-        st.success("Готово")
+        st.metric("🐝 Обнаружено пчёл", count)
+        st.success("Анализ завершён")
     else:
-        st.info("Загрузите фото")
+        st.info("Загрузите изображение")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+# --- РАЗДЕЛ ---
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# --- БЛОКИ ---
-colA, colB, colC = st.columns(3)
+# --- ИНФО БЛОКИ (БЕЗ ПУСТЫХ ПОЛОС) ---
+col1, col2, col3 = st.columns(3, gap="large")
 
-with colA:
+with col1:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("⚡ Проблема")
-    st.write("Нельзя вручную отслеживать пчёл в реальном времени.")
+    st.write("Ручной подсчёт пчёл невозможен при большом количестве ульев.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-with colB:
+with col2:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("🤖 Решение")
-    st.write("ИИ считает пчёл автоматически.")
+    st.write("Нейросеть автоматически считает пчёл и анализирует активность.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-with colC:
+with col3:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("🎯 Цель")
-    st.write("Предотвратить гибель колоний.")
+    st.write("Предотвращение гибели пчелиных колоний.")
     st.markdown('</div>', unsafe_allow_html=True)
+
+# --- О ПРОЕКТЕ ---
+st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+
+st.markdown('<div class="card">', unsafe_allow_html=True)
+st.subheader("📖 О проекте")
+st.write("""
+BeeTraker превращает хаотичное движение пчёл в точные данные.  
+Это помогает выявлять проблемы заранее и повышать эффективность пасек.
+""")
+st.markdown('</div>', unsafe_allow_html=True)
+
+# --- ФУТЕР ---
+st.markdown("""
+<div style="text-align:center; margin-top:40px;">
+    <p style="color:#64748b;">© 2026 BeeTraker AI</p>
+</div>
+""", unsafe_allow_html=True)
