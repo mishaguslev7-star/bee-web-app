@@ -24,18 +24,52 @@ def get_bee_word(n):
         return "особи"
     return "особей"
 
-# --- 3. DARK UI/UX DESIGN ---
+# --- 3. DARK UI/UX DESIGN С СОТАМИ И АНИМАЦИЕЙ ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800&family=Montserrat:wght@300;400;700&display=swap');
+    
     header, footer, #MainMenu {visibility: hidden !important;}
+    
     .stApp {
         background-color: #0F172A;
-        background-image: url('https://www.transparenttextures.com/patterns/honey-comb.png');
-        background-attachment: fixed;
         color: #F8FAFC;
     }
-    .main .block-container { max-width: 1200px; padding: 2rem 1rem !important; }
+
+    /* Фоновые соты */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('https://www.transparenttextures.com/patterns/honey-comb.png');
+        opacity: 0.4; /* Прозрачность сот */
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .main .block-container { 
+        max-width: 1200px; 
+        padding: 2rem 1rem !important; 
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Анимация покачивания пчелы */
+    @keyframes bee-swing {
+        0% { transform: rotate(-10deg); }
+        50% { transform: rotate(10deg); }
+        100% { transform: rotate(-10deg); }
+    }
+
+    .swinging-bee {
+        display: inline-block;
+        animation: bee-swing 2s ease-in-out infinite;
+        transform-origin: center;
+    }
+
     .main-title {
         font-family: 'Orbitron', sans-serif;
         font-size: clamp(2rem, 5vw, 3.5rem);
@@ -44,9 +78,10 @@ st.markdown("""
         letter-spacing: 4px;
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 20px;
         text-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
     }
+
     .section-header {
         font-family: 'Orbitron', sans-serif;
         color: #5EEAD4;
@@ -56,6 +91,7 @@ st.markdown("""
         padding-left: 15px;
         font-size: 1.5rem;
     }
+
     .info-card {
         background: rgba(30, 41, 59, 0.7);
         padding: 1.8rem;
@@ -64,21 +100,28 @@ st.markdown("""
         backdrop-filter: blur(12px);
         height: 100%;
     }
+
     .goal-card {
-        background: linear-gradient(135deg, rgba(45, 212, 191, 0.1), rgba(15, 23, 42, 0.9));
+        background: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(15, 23, 42, 0.9));
         padding: 2rem;
         border-radius: 24px;
         border: 2px solid #2DD4BF;
         margin-bottom: 2rem;
     }
+
     h3 { color: #5EEAD4 !important; font-size: 1.2rem !important; margin-bottom: 10px !important; }
     p { color: #CBD5E1; line-height: 1.6; margin: 0; }
     b { color: #5EEAD4; }
+
     div[data-testid="stFileUploadDropzone"] {
         border: 2px dashed #2DD4BF !important;
         background: rgba(30, 41, 59, 0.5) !important;
     }
-    [data-testid="stMetricValue"] { color: #2DD4BF !important; font-family: 'Orbitron', sans-serif; }
+
+    [data-testid="stMetricValue"] { 
+        color: #2DD4BF !important; 
+        font-family: 'Orbitron', sans-serif; 
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -98,9 +141,9 @@ model = load_model()
 # --- 5. ШАПКА ---
 st.markdown("""
     <div class="main-title">
-        <span style="font-size: 1.2em;">🐝</span> Пчелиный Учёт
+        <span class="swinging-bee" style="font-size: 1.2em;">🐝</span> BeeTracker
     </div>
-    <p style="color: #94A3B8; margin-bottom: 2rem;">Интеллектуальный мониторинг экосистемы пасеки</p>
+    <p style="color: #94A3B8; margin-bottom: 2rem; padding-left: 5px;">Интеллектуальный мониторинг экосистемы пасеки</p>
     
     <div class="goal-card">
         <h3>🎯 Цель проекта</h3>
