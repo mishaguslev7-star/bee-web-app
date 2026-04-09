@@ -179,7 +179,7 @@ with col_up:
                 # КОРРЕКТИРОВКИ МОДЕЛИ (сохранено):
                 # conf=0.5: игнорируем всё, в чем сеть уверена меньше чем на 50%
                 # iou=0.3: склеиваем сильно перекрывающиеся боксы (борьба с дублями)
-                results = model(img, conf=0.35, iou=0.67)[0] 
+                results = model(img, conf=0.25, iou=0.8)[0] 
                 
                 annotated_img = results.plot(labels=True, boxes=True)
                 annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
