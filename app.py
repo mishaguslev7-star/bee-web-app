@@ -13,200 +13,202 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. БИРЮЗОВАЯ ТЕМА + ПЛАВНАЯ АНИМАЦИЯ ---
+# --- 2. УЛУЧШЕННЫЙ ДИЗАЙН (Сетка, Анимации, Адаптивность) ---
 st.markdown("""
     <style>
-    header {visibility: hidden !important;}
-    footer {visibility: hidden !important;}
-    div[data-testid="stToolbar"] {display: none !important;}
-    .stDeployButton {display:none !important;}
-
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
+    /* Подключение современных шрифтов */
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800&family=Montserrat:wght@300;400;700&display=swap');
     
-    html, body, [class*="css"] {
-        font-family: 'Montserrat', sans-serif;
-    }
+    header, footer, #MainMenu {visibility: hidden !important;}
 
+    /* Фоновый узор из сот */
     .stApp {
         background-color: #F0FDFA;
+        background-image: url('https://www.transparenttextures.com/patterns/honey-comb.png');
+        background-attachment: fixed;
     }
 
-    /* ФИКС КНОПКИ: прозрачный оверлей больше не мешает */
-    div[data-testid="stFileUploadDropzone"] {
-        background-color: #FFFFFF !important;
-        border: 2px dashed #14B8A6 !important;
-        border-radius: 20px !important;
-        z-index: 100 !important;
-        position: relative !important;
-        transition: all 0.3s ease;
-    }
-    div[data-testid="stFileUploadDropzone"]:hover {
-        border-color: #0D9488 !important;
-        background-color: #F9FFFE !important;
-        transform: translateY(-2px);
+    /* Сетка и отступы */
+    .main .block-container {
+        max-width: 1200px;
+        padding: 3rem 1rem !important;
+        gap: 2rem;
     }
 
-    /* Заголовки */
-    h1, h2, h3 {
-        color: #0F766E !important;
-        font-weight: 800 !important;
-    }
-    
-    h1 {
-        font-size: 3.2rem !important;
-        border-left: 12px solid #14B8A6;
-        padding-left: 1.5rem;
+    /* Название BeeTracker (Стилизация под Space Ranger) */
+    .main-title {
+        font-family: 'Orbitron', sans-serif; /* Технологичный шрифт */
+        font-size: clamp(2.5rem, 8vw, 4.5rem);
+        color: #0F766E;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 15px;
     }
 
-    /* АНИМИРОВАННЫЕ КАРТОЧКИ */
+    /* Анимация пчелы в заголовке */
+    .floating-bee {
+        display: inline-block;
+        animation: bee-bounce 3s ease-in-out infinite;
+    }
+    @keyframes bee-bounce {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-15px) rotate(5deg); }
+    }
+
+    /* Подзаголовок */
+    .sub-title {
+        font-family: 'Montserrat', sans-serif;
+        font-size: clamp(1rem, 3vw, 1.4rem);
+        color: #334155;
+        font-weight: 300;
+        margin-bottom: 2rem;
+        line-height: 1.4;
+    }
+    .highlight {
+        color: #14B8A6;
+        font-weight: 700;
+        border-bottom: 2px solid #5EEAD4;
+    }
+
+    /* Анимированные карточки с иконками */
     .info-card {
-        background: #FFFFFF;
-        padding: 1.8rem;
-        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 2rem;
+        border-radius: 20px;
         border: 1px solid #CCFBF1;
-        border-top: 6px solid #14B8A6;
-        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.05);
-        height: 100%;
-        color: #134E4A;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Плавный вылет */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .info-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(20, 184, 166, 0.1);
+        border-color: #14B8A6;
+    }
+    .card-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        display: block;
     }
 
-    .info-card:hover {
-        transform: translateY(-10px); /* Подъем при наведении */
-        box-shadow: 0 15px 30px rgba(20, 184, 166, 0.15);
-        border-color: #5EEAD4;
-        background: #F9FFFE;
+    /* Адаптивный загрузчик */
+    div[data-testid="stFileUploadDropzone"] {
+        border: 2px dashed #14B8A6 !important;
+        background: #FFFFFF !important;
+        border-radius: 15px !important;
+        padding: 2rem !important;
     }
 
     /* Метрики */
     [data-testid="stMetricValue"] {
         color: #14B8A6 !important;
-        font-size: 3.5rem !important;
         font-weight: 800 !important;
-    }
-    
-    .stMetric {
-        background: white !important;
-        padding: 20px !important;
-        border-radius: 15px !important;
-        border: 1px solid #CCFBF1 !important;
-        transition: transform 0.3s ease;
-    }
-    .stMetric:hover {
-        transform: scale(1.02);
-    }
-
-    /* Кнопки */
-    .stDownloadButton button {
-        background: linear-gradient(135deg, #14B8A6, #0D9488) !important;
-        color: white !important;
-        border-radius: 12px !important;
-        border: none !important;
-        font-weight: 700 !important;
-        box-shadow: 0 4px 0 #0F766E !important;
-        transition: all 0.2s ease !important;
-    }
-    .stDownloadButton button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 0 #0D9488 !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. ЗАГРУЗКА МОДЕЛИ ---
+# --- 3. ЛОГИКА ---
 @st.cache_resource
 def load_model():
     model_path = "best.pt"
-    if not os.path.exists(model_path): return None
-    try: return YOLO(model_path)
-    except: return None
+    if os.path.exists(model_path):
+        return YOLO(model_path)
+    return None
 
 model = load_model()
 
-# --- 4. ШАПКА ---
-st.markdown("<p style='color: #0D9488; font-weight: 600; letter-spacing: 2px; margin-bottom: 0;'>🪐 НАУЧНАЯ ВСЕЛЕННАЯ ПЕРВЫХ</p>", unsafe_allow_html=True)
-
-col_t, col_l = st.columns([4, 1.2])
-with col_t:
-    # Заменили название на BeeTracker с иконкой
-    st.markdown("<h1>🐝 BeeTracker</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 1.2rem; color: #115E59; margin-top: 5px;'>Интеллектуальная система мониторинга пчелиных семей</p>", unsafe_allow_html=True)
-with col_l:
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #14B8A6, #0D9488); color: white; padding: 12px; border-radius: 15px; text-align: center; font-weight: 800; margin-top: 15px; box-shadow: 0 4px 0 #0F766E;">
-        AI CORE v11
+# --- 4. ШАПКА (ВЫРАЗИТЕЛЬНАЯ) ---
+st.markdown("""
+    <div class="main-title">
+        <span class="floating-bee">🐝</span> BeeTracker
     </div>
-    """, unsafe_allow_html=True)
+    <div class="sub-title">
+        Интеллектуальная система <span class="highlight">мониторинга пчел</span> 
+        на базе компьютерного зрения.
+    </div>
+""", unsafe_allow_html=True)
 
-st.markdown("---")
+# --- 5. ОСНОВНОЙ КОНТЕНТ (СЕТКА) ---
+col_upload, col_stats = st.columns([1.4, 1], gap="large")
 
-# --- 5. РАБОЧАЯ ЗОНА ---
-col_up, col_res = st.columns([1.5, 1])
-
-with col_up:
-    st.markdown("### 📸 Анализ снимка")
-    file = st.file_uploader("upload", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed", key="bt_uploader")
-
-if file is not None and model is not None:
-    img = Image.open(file)
-    with st.spinner('Нейросеть обрабатывает изображение...'):
-        results = model(img)[0]
-        annotated_img = results.plot(masks=False, kpts=False)
-        annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
-        count = len(results.boxes)
+with col_upload:
+    st.markdown("### 📥 Загрузка данных")
+    file = st.file_uploader("upload", type=['jpg', 'png', 'jpeg'], label_visibility="collapsed")
     
-    with col_up:
-        st.image(annotated_img, use_container_width=True)
-    
-    with col_res:
-        st.markdown("### 📊 Статистика")
-        st.metric(label="ОБНАРУЖЕНО ОСОБЕЙ", value=f"{count}")
-        
-        st.markdown('<div class="info-card">', unsafe_allow_html=True)
-        st.markdown("#### Аналитический вывод")
-        if count == 0:
-            st.error("Пчелы не обнаружены. Проверьте качество фото.")
-        elif count < 15:
-            st.warning("⚠️ Низкая активность. Требуется проверка улья.")
+    if file:
+        img = Image.open(file)
+        if model:
+            results = model(img)[0]
+            annotated_img = results.plot(masks=False, kpts=False)
+            annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
+            st.image(annotated_img, use_container_width=True, caption="Анализ завершен")
+            count = len(results.boxes)
         else:
-            st.success("✅ Семья в отличной форме. Плотность в норме.")
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.error("Модель не найдена")
+
+with col_stats:
+    if file and model:
+        st.markdown("### 📊 Отчет")
+        st.metric("НАЙДЕНО ОСОБЕЙ", f"{count}")
         
+        st.markdown(f"""
+        <div class="info-card">
+            <span class="card-icon">🍯</span>
+            <strong>Статус участка:</strong><br>
+            {"Оптимальная активность" if count > 20 else "Требуется проверка"}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Кнопка
         res_bytes = cv2.imencode('.jpg', cv2.cvtColor(annotated_img, cv2.COLOR_RGB2BGR))[1].tobytes()
-        st.download_button("📥 Сохранить отчет", res_bytes, "bee_tracker_result.jpg", "image/jpeg", use_container_width=True)
-else:
-    with col_res:
-        st.info("👈 Загрузите фотографию рамки или летка для автоматического подсчёта.")
+        st.download_button("💾 Сохранить результат", res_bytes, "result.jpg", use_container_width=True)
+    else:
+        st.markdown("""
+        <div style="background: white; padding: 2.5rem; border-radius: 20px; border: 2px dashed #CBD5E1; text-align: center; color: #64748B;">
+            <span style="font-size: 3rem;">📸</span><br>
+            Ожидание снимка для запуска детекции
+        </div>
+        """, unsafe_allow_html=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<br><br>", unsafe_allow_html=True)
 
-# --- 6. ИНФОРМАЦИОННЫЕ БЛОКИ (С АНИМАЦИЕЙ) ---
-st.header("🔬 О ПРОЕКТЕ")
-c1, c2, c3 = st.columns(3)
+# --- 6. ТЕМАТИЧЕСКИЕ БЛОКИ (С ИКОНКАМИ) ---
+st.markdown("## 🔍 Детали проекта")
+c1, c2, c3 = st.columns(3, gap="medium")
 
 with c1:
     st.markdown("""
     <div class="info-card">
-        <h3>🚨 Актуальность</h3>
-        Владельцам сотен ульев физически невозможно заглядывать в каждый ежедневно. 
-        <b>BeeTracker</b> позволяет вовремя заметить экологическую угрозу или болезнь.
+        <span class="card-icon">🏠</span>
+        <h3>Для пасек</h3>
+        Автоматизация учета на больших хозяйствах. Больше не нужно считать пчел вручную — ИИ сделает это за доли секунды.
     </div>
     """, unsafe_allow_html=True)
 
 with c2:
     st.markdown("""
     <div class="info-card">
-        <h3>⚡ Технологии</h3>
-        Пчела движется со скоростью до 30 км/ч. Наш AI на базе <b>YOLO11</b> фиксирует то, что пропускает человеческий глаз, экономя часы ручного труда.
+        <span class="card-icon">🌸</span>
+        <h3>Эко-контроль</h3>
+        Пчела — индикатор здоровья природы. BeeTracker помогает вовремя заметить снижение популяции и спасти колонию.
     </div>
     """, unsafe_allow_html=True)
 
 with c3:
     st.markdown("""
     <div class="info-card">
-        <h3>🚀 Перспективы</h3>
-        В планах — дообучение модели на распознавание <b>варроатоза</b> и запуск мобильного приложения для работы прямо на пасеке без интернета.
+        <span class="card-icon">🧬</span>
+        <h3>Технологии</h3>
+        Использование архитектуры <b>YOLO11</b> обеспечивает точность более 90% даже при быстром движении пчел.
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown("<br><p style='text-align: center; color: #0D9488; opacity: 0.6;'>BeeTracker • Всероссийский фестиваль 2026</p>", unsafe_allow_html=True)
+st.markdown("""
+    <div style="text-align: center; margin-top: 4rem; color: #94A3B8; font-size: 0.9rem;">
+        BeeTracker AI • Научная вселенная Первых • 2026
+    </div>
+""", unsafe_allow_html=True)
