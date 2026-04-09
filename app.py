@@ -167,55 +167,57 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 6. АНАЛИЗ (С КОРРЕКТИРОВКАМИ ДЛЯ МОДЕЛИ) ---
+# --- 6. АНАЛИЗ ---
 col_up, col_res = st.columns([1.4, 1], gap="large")
 
 with col_up:
     st.markdown("### 📥 Анализ изображения")
     file = st.file_uploader("Загрузите фото", type=['jpg', 'png', 'jpeg'], label_visibility="collapsed")
+    
+    # Добавляем отступ снизу перед картинкой
+    st.markdown('<div style="margin-top: 2rem;"></div>', unsafe_allow_html=True)
+    
     if file:
         img = Image.open(file)
         if model:
             with st.spinner('Нейросеть BeeTracker анализирует кадр...'):
-                # КОРРЕКТИРОВКИ МОДЕЛИ (сохранено):
-                # conf=0.5: игнорируем всё, в чем сеть уверена меньше чем на 50%
-                # iou=0.3: склеиваем сильно перекрывающиеся боксы (борьба с дублями)
                 results = model(img, conf=0.35, iou=0.6)[0] 
-                
                 annotated_img = results.plot(labels=True, boxes=True)
                 annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
                 st.image(annotated_img, use_container_width=True)
                 count = len(results.boxes)
-        else:
-            st.warning("⚠️ Модель не загружена. Проверьте файл 'best.pt'.")
 
 with col_res:
     if file and model:
         bee_word = get_bee_word(count)
+        fix_word = get_fix_word(count)
+        
         st.metric("ОБНАРУЖЕНО", f"{count} {bee_word}")
         
-        # Новый показатель: средняя уверенность AI
         if count > 0:
             avg_conf = np.mean(results.boxes.conf.cpu().numpy()) * 100
             st.metric("УВЕРЕННОСТЬ AI", f"{avg_conf:.1f}%")
         
+        # Увеличенный отступ перед карточкой отчета
+        st.markdown('<div style="margin-top: 3rem;"></div>', unsafe_allow_html=True)
+        
         st.markdown(f"""
         <div class="info-card">
             <h3>📊 Текущий отчёт</h3>
-            На снимке зафиксировано <b>{count} {bee_word}</b>.
-            {"Активность высокая." if count > 10 else "Активность умеренная."}
+            На снимке <b>{fix_word} {count} {bee_word}</b>.
         </div>
         """, unsafe_allow_html=True)
         
-        # Кнопка скачивания
+        # Увеличенный отступ перед кнопкой сохранения
+        st.markdown('<div style="margin-top: 2.5rem;"></div>', unsafe_allow_html=True)
+        
         res_bytes = cv2.imencode('.jpg', cv2.cvtColor(annotated_img, cv2.COLOR_RGB2BGR))[1].tobytes()
-        st.download_button("💾 Сохранить результат", res_bytes, "bee_report.jpg", use_container_width=True)
-    else:
-        st.markdown("""
-        <div style="background: rgba(30, 41, 59, 0.4); padding: 2.5rem; border-radius: 20px; border: 2px dashed rgba(148, 163, 184, 0.2); text-align: center;">
-            <p style="color: #64748B;">Ожидание снимка для запуска детектора</p>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.download_button(
+            "💾 Сохранить результат", 
+            res_bytes, 
+            "bee_report.jpg", 
+            use_container_width=True
+        )
 # --- 7. О ПРОЕКТЕ ---
 st.markdown('<div class="section-header">🔍 О ПРОЕКТЕ</div>', unsafe_allow_html=True)
 a1, a2 = st.columns(2, gap="medium")
@@ -224,7 +226,7 @@ with a1:
     st.markdown("""
     <div class="info-card">
         <h3>Почему это важно?</h3>
-        Пчела летает со скоростью до <b>30 км/ч</b>. Человеческий глаз не способен точно посчитать 50–100 быстро движущихся особей. 
+        Пчела летает со скоростью до <b>30 км/ч</b>.
         Владельцам сотен ульев физически невозможно заглядывать в каждый ежедневно — без автоматизации проблему замечают слишком позднно.
     </div>
     """, unsafe_allow_html=True)
