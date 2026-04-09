@@ -32,36 +32,18 @@ st.markdown("""
         padding: 2rem 1rem !important;
     }
 
-    /* Заголовки */
     .main-title {
         font-family: 'Orbitron', sans-serif;
-        font-size: clamp(2.2rem, 7vw, 4rem);
+        font-size: clamp(2rem, 5vw, 3.5rem);
         color: #2DD4BF;
         text-transform: uppercase;
-        letter-spacing: 6px;
+        letter-spacing: 4px;
         display: flex;
         align-items: center;
         gap: 15px;
-        text-shadow: 0 0 25px rgba(45, 212, 191, 0.4);
+        text-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
     }
 
-    .floating-bee {
-        display: inline-block;
-        animation: bee-float 3s ease-in-out infinite;
-    }
-    @keyframes bee-float {
-        0%, 100% { transform: translateY(0) rotate(-5deg); }
-        50% { transform: translateY(-12px) rotate(10deg); }
-    }
-
-    .sub-title {
-        font-family: 'Montserrat', sans-serif;
-        font-size: 1.2rem;
-        color: #94A3B8;
-        margin-bottom: 2rem;
-    }
-
-    /* Блоки контента */
     .section-header {
         font-family: 'Orbitron', sans-serif;
         color: #5EEAD4;
@@ -69,6 +51,7 @@ st.markdown("""
         margin: 3rem 0 1.5rem 0;
         border-left: 5px solid #2DD4BF;
         padding-left: 15px;
+        font-size: 1.5rem;
     }
 
     .info-card {
@@ -77,13 +60,12 @@ st.markdown("""
         border-radius: 24px;
         border: 1px solid rgba(45, 212, 191, 0.1);
         backdrop-filter: blur(12px);
-        transition: all 0.4s ease;
+        transition: all 0.3s ease;
         height: 100%;
     }
     .info-card:hover {
-        transform: translateY(-8px);
+        transform: translateY(-5px);
         border-color: #2DD4BF;
-        box-shadow: 0 15px 35px -10px rgba(45, 212, 191, 0.3);
     }
 
     .goal-card {
@@ -94,8 +76,7 @@ st.markdown("""
         margin-bottom: 2rem;
     }
 
-    .card-icon { font-size: 2.2rem; margin-bottom: 1rem; display: block; }
-    h3 { color: #5EEAD4 !important; font-size: 1.3rem !important; margin-bottom: 10px !important; }
+    h3 { color: #5EEAD4 !important; font-size: 1.2rem !important; margin-bottom: 10px !important; }
     p { color: #CBD5E1; line-height: 1.6; margin: 0; }
     b { color: #5EEAD4; }
 
@@ -103,130 +84,114 @@ st.markdown("""
     div[data-testid="stFileUploadDropzone"] {
         border: 2px dashed #2DD4BF !important;
         background: rgba(30, 41, 59, 0.5) !important;
-        border-radius: 20px !important;
     }
-
-    [data-testid="stMetricValue"] { color: #2DD4BF !important; font-family: 'Orbitron', sans-serif; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. ЛОГИКА МОДЕЛИ ---
+# --- 3. БЕЗОПАСНАЯ ЛОГИКА МОДЕЛИ ---
 @st.cache_resource
 def load_model():
     model_path = "best.pt"
-    if os.path.exists(model_path):
-        return YOLO(model_path)
+    # Проверка на существование и размер файла (исправление EOFError)
+    if os.path.exists(model_path) and os.path.getsize(model_path) > 0:
+        try:
+            return YOLO(model_path)
+        except Exception as e:
+            st.error(f"Ошибка загрузки модели: {e}")
     return None
 
 model = load_model()
 
-# --- 4. ШАПКА И ЦЕЛЬ ---
+# --- 4. ШАПКА ---
 st.markdown("""
     <div class="main-title">
-        <span class="floating-bee">🐝</span> BeeTracker
+        <span style="font-size: 1.2em;">🐝</span> Пчелиный Учёт
     </div>
-    <div class="sub-title">
-        Интеллектуальная система мониторинга пчел
-    </div>
+    <p style="color: #94A3B8; margin-bottom: 2rem;">Интеллектуальный мониторинг экосистемы пасеки</p>
     
     <div class="goal-card">
         <h3>🎯 Цель проекта</h3>
-        <p style="font-size: 1.15rem;">
-            Создание доступного ИИ-инструмента для спасения пчелиных семей. Мы помогаем пчеловодам вовремя заметить угрозу и автоматизируем сложный процесс подсчета насекомых.
-        </p>
+        <p>Создание системы автоматического контроля за пчелами, которая помогает вовремя заметить экологическую угрозу и спасти пасеку от гибели.</p>
     </div>
 """, unsafe_allow_html=True)
 
-# --- 5. ИНТЕРФЕЙС АНАЛИЗА ---
+# --- 5. АНАЛИЗ ---
 col_up, col_res = st.columns([1.4, 1], gap="large")
 
 with col_up:
-    st.markdown("### 📥 Загрузка фото")
-    file = st.file_uploader("upload", type=['jpg', 'png', 'jpeg'], label_visibility="collapsed")
+    st.markdown("### 📥 Анализ изображения")
+    file = st.file_uploader("Загрузите фото", type=['jpg', 'png', 'jpeg'], label_visibility="collapsed")
     if file:
         img = Image.open(file)
         if model:
-            with st.spinner('Нейросеть считает пчел...'):
-                results = model(img)[0]
-                annotated_img = results.plot(masks=False, kpts=False)
-                annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
-                st.image(annotated_img, use_container_width=True)
-                count = len(results.boxes)
+            results = model(img)[0]
+            # Исправленный вызов plot для исключения TypeError
+            annotated_img = results.plot(labels=True, boxes=True)
+            annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
+            st.image(annotated_img, use_container_width=True)
+            count = len(results.boxes)
         else:
-            st.error("Ошибка: Файл модели 'best.pt' не найден.")
+            st.warning("⚠️ Модель не загружена или файл 'best.pt' пуст.")
 
 with col_res:
     if file and model:
-        st.metric("НАЙДЕНО ПЧЕЛ", f"{count}")
+        st.metric("ОБНАРУЖЕНО ПЧЕЛ", f"{count}")
         st.markdown(f"""
         <div class="info-card">
-            <span class="card-icon">📊</span>
-            <h3>Аналитика</h3>
-            Обработка завершена. Зафиксировано <b>{count}</b> объектов. 
-            Это позволяет оценить активность летка без ручного вмешательства.
-        </div>
-        """, unsafe_allow_html=True)
-        res_bytes = cv2.imencode('.jpg', cv2.cvtColor(annotated_img, cv2.COLOR_RGB2BGR))[1].tobytes()
-        st.download_button("💾 Сохранить отчет", res_bytes, "report.jpg", use_container_width=True)
-    else:
-        st.markdown("""
-        <div style="background: rgba(30, 41, 59, 0.4); padding: 2.5rem; border-radius: 20px; border: 2px dashed rgba(148, 163, 184, 0.2); text-align: center;">
-            <span style="font-size: 3rem; opacity: 0.2;">📷</span>
-            <p style="color: #64748B; margin-top: 1rem;">Загрузите снимок для теста ИИ</p>
+            <h3>📊 Текущий отчёт</h3>
+            На снимке зафиксировано <b>{count}</b> особей. 
+            Это данные, которые невозможно получить вручную так быстро.
         </div>
         """, unsafe_allow_html=True)
 
-# --- 6. НОВЫЙ БЛОК: О ПРОЕКТЕ (ПОНЯТНЫМ ЯЗЫКОМ) ---
+# --- 6. НОВЫЙ БЛОК: О ПРОЕКТЕ (УПРОЩЕННО) ---
 st.markdown('<div class="section-header">🔍 О ПРОЕКТЕ</div>', unsafe_allow_html=True)
 a1, a2 = st.columns(2, gap="medium")
 
 with a1:
     st.markdown("""
     <div class="info-card">
-        <span class="card-icon">❓</span>
-        <h3>В чем проблема?</h3>
-        Пчеловодам с сотнями ульев трудно следить за каждым. Пчелы летают очень быстро (до 30 км/ч), и человек просто не может точно их сосчитать. Если пчелы заболеют или их станет меньше, пчеловод может заметить это слишком поздно.
+        <h3>Почему это важно?</h3>
+        Пчела летает со скоростью до <b>30 км/ч</b>. Человеческий глаз не способен точно посчитать 50–100 быстро движущихся особей. 
+        Владельцам сотен ульев физически невозможно заглядывать в каждый ежедневно — без автоматизации проблему замечают слишком поздно.
     </div>
     """, unsafe_allow_html=True)
 
 with a2:
     st.markdown("""
     <div class="info-card">
-        <span class="card-icon">💡</span>
-        <h3>Наше решение</h3>
-        Мы создали умный сервис, который делает всю сложную работу за человека. Вы просто загружаете фото или видео, а наша нейросеть <b>YOLO11</b> мгновенно находит и считает каждую пчелу, помогая следить за здоровьем всей пасеки.
+        <h3>Как мы это решаем?</h3>
+        Наш проект превращает хаотичное движение пчел в ценные данные. 
+        Используя нейросеть <b>YOLO11</b>, система мгновенно фиксирует активность на летке, заменяя ручной труд точным компьютерным зрением.
     </div>
     """, unsafe_allow_html=True)
 
 # --- 7. ПЕРСПЕКТИВЫ ---
-st.markdown('<div class="section-header">🚀 ПЕРСПЕКТИВЫ</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header">🚀 ПЕРСПЕКТИВЫ РАЗВИТИЯ</div>', unsafe_allow_html=True)
 p1, p2, p3 = st.columns(3, gap="medium")
 
 with p1:
     st.markdown("""
     <div class="info-card">
-        <span class="card-icon">🔄</span>
-        <h3>Живой поток</h3>
-        Переход на видеомониторинг в реальном времени для постоянного контроля летка.
+        <h3>Скорость и точность</h3>
+        Оптимизация нейросети для работы на более высоких скоростях и с улучшенной точностью трекинга.
     </div>
     """, unsafe_allow_html=True)
 
 with p2:
     st.markdown("""
     <div class="info-card">
-        <span class="card-icon">📱</span>
-        <h3>Приложение</h3>
-        Запуск мобильной версии, чтобы пчеловод мог проверять ульи прямо со смартфона на пасеке.
+        <h3>Мобильное приложение</h3>
+        Разработка версии для смартфонов, чтобы пчеловод мог навести камеру на леток и мгновенно получить отчет.
     </div>
     """, unsafe_allow_html=True)
 
 with p3:
     st.markdown("""
     <div class="info-card">
-        <span class="card-icon">🔬</span>
-        <h3>Здоровье</h3>
-        Обучение ИИ распознаванию болезней пчел и вредителей (например, клеща Варроа).
+        <h3>Диагностика</h3>
+        Дообучение модели для распознавания разных подвидов пчел и определения признаков болезней.
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown("<br><br><p style='text-align: center; color: #475569; font-size: 0.8rem;'>BEETRACKER AI • 2026</p>", unsafe_allow_html=True)
+st.markdown("<br><br><p style='text-align: center; color: #475569; font-size: 0.8rem;'>НАУЧНАЯ ВСЕЛЕННАЯ ПЕРВЫХ • 2026</p>", unsafe_allow_html=True)
