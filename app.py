@@ -24,19 +24,20 @@ def get_bee_word(n):
         return "особи"
     return "особей"
 
-# --- 3. DARK UI/UX DESIGN С СОТАМИ И АНИМАЦИЕЙ ---
+# --- 3. DARK UI/UX DESIGN С ФРАГМЕНТАРНЫМИ СОТАМИ И АНИМАЦИЕЙ ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800&family=Montserrat:wght@300;400;700&display=swap');
     
     header, footer, #MainMenu {visibility: hidden !important;}
     
+    /* Основной фон приложения */
     .stApp {
         background-color: #0F172A;
-        color: #F8FAFC;
+        position: relative;
     }
 
-    /* Фоновые соты */
+    /* Слой для фрагментарных сот (только в углах) */
     .stApp::before {
         content: "";
         position: fixed;
@@ -44,12 +45,23 @@ st.markdown("""
         left: 0;
         width: 100%;
         height: 100%;
-        background-image: url('https://www.transparenttextures.com/patterns/honey-comb.png');
-        opacity: 0.4; /* Прозрачность сот */
+        /* Используем контрастный паттерн hexellence */
+        background-image: url('https://www.transparenttextures.com/patterns/hexellence.png');
+        background-repeat: repeat;
+        background-size: 150px;
+        
+        /* Маска для создания эффекта фрагментарности (соты только по углам) */
+        -webkit-mask-image: radial-gradient(circle at 10% 10%, black 0%, transparent 40%),
+                             radial-gradient(circle at 90% 90%, black 0%, transparent 40%);
+        mask-image: radial-gradient(circle at 10% 10%, black 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, black 0%, transparent 40%);
+        
+        opacity: 0.2; /* Яркость сот */
         pointer-events: none;
         z-index: 0;
     }
 
+    /* Контент должен быть выше слоя сот */
     .main .block-container { 
         max-width: 1200px; 
         padding: 2rem 1rem !important; 
@@ -59,14 +71,14 @@ st.markdown("""
 
     /* Анимация покачивания пчелы */
     @keyframes bee-swing {
-        0% { transform: rotate(-10deg); }
-        50% { transform: rotate(10deg); }
-        100% { transform: rotate(-10deg); }
+        0% { transform: rotate(-8deg); }
+        50% { transform: rotate(8deg); }
+        100% { transform: rotate(-8deg); }
     }
 
     .swinging-bee {
         display: inline-block;
-        animation: bee-swing 2s ease-in-out infinite;
+        animation: bee-swing 2.5s ease-in-out infinite;
         transform-origin: center;
     }
 
@@ -92,19 +104,18 @@ st.markdown("""
         font-size: 1.5rem;
     }
 
-    .info-card {
-        background: rgba(30, 41, 59, 0.7);
-        padding: 1.8rem;
-        border-radius: 24px;
+    /* Glassmorphism для карточек */
+    .info-card, .goal-card {
+        background: rgba(30, 41, 59, 0.6) !important;
+        backdrop-filter: blur(10px);
         border: 1px solid rgba(45, 212, 191, 0.1);
-        backdrop-filter: blur(12px);
+        border-radius: 24px;
+        padding: 1.8rem;
         height: 100%;
     }
 
     .goal-card {
-        background: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(15, 23, 42, 0.9));
-        padding: 2rem;
-        border-radius: 24px;
+        background: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(15, 23, 42, 0.9)) !important;
         border: 2px solid #2DD4BF;
         margin-bottom: 2rem;
     }
@@ -128,6 +139,7 @@ st.markdown("""
 # --- 4. БЕЗОПАСНАЯ ЛОГИКА МОДЕЛИ ---
 @st.cache_resource
 def load_model():
+    # Загружаем твою дообученную модель
     model_path = "best.pt"
     if os.path.exists(model_path) and os.path.getsize(model_path) > 0:
         try:
@@ -138,7 +150,7 @@ def load_model():
 
 model = load_model()
 
-# --- 5. ШАПКА ---
+# --- 5. ШАПКА (BeeTracker + Покачивающаяся пчела) ---
 st.markdown("""
     <div class="main-title">
         <span class="swinging-bee" style="font-size: 1.2em;">🐝</span> BeeTracker
@@ -151,7 +163,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- 6. АНАЛИЗ ---
+# --- 6. АНАЛИЗ (С КОРРЕКТИРОВКАМИ МОДЕЛИ) ---
 col_up, col_res = st.columns([1.4, 1], gap="large")
 
 with col_up:
@@ -160,8 +172,12 @@ with col_up:
     if file:
         img = Image.open(file)
         if model:
-            with st.spinner('Нейросеть обрабатывает снимок...'):
-                results = model(img)[0]
+            with st.spinner('Нейросеть BeeTracker анализирует кадр...'):
+                # КОРРЕКТИРОВКИ МОДЕЛИ:
+                # conf=0.5: игнорируем всё, в чем сеть уверена меньше чем на 50%
+                # iou=0.3: склеиваем сильно перекрывающиеся боксы (борьба с дублями)
+                results = model(img, conf=0.5, iou=0.3)[0] 
+                
                 annotated_img = results.plot(labels=True, boxes=True)
                 annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
                 st.image(annotated_img, use_container_width=True)
@@ -173,10 +189,17 @@ with col_res:
     if file and model:
         bee_word = get_bee_word(count)
         st.metric("ОБНАРУЖЕНО", f"{count} {bee_word}")
+        
+        # Новый показатель: средняя уверенность AI
+        if count > 0:
+            avg_conf = np.mean(results.boxes.conf.cpu().numpy()) * 100
+            st.metric("УВЕРЕННОСТЬ AI", f"{avg_conf:.1f}%")
+        
         st.markdown(f"""
         <div class="info-card">
             <h3>📊 Текущий отчёт</h3>
             На снимке зафиксировано <b>{count} {bee_word}</b>.
+            {"Активность высокая." if count > 10 else "Активность умеренная."}
         </div>
         """, unsafe_allow_html=True)
         
@@ -198,8 +221,8 @@ with a1:
     st.markdown("""
     <div class="info-card">
         <h3>Почему это важно?</h3>
-        Пчела летает со скоростью до <b>30 км/ч</b>.
-        Владельцам сотен ульев физически невозможно заглядывать в каждый ежедневно — без автоматизации проблему замечают слишком поздно.
+        Пчела летает со скоростью до <b>30 км/ч</b>. Человеческий глаз не способен точно посчитать 50–100 быстро движущихся особей. 
+        Владельцам сотен ульев физически невозможно заглядывать в каждый ежедневно — без автоматизации проблему замечают слишком позддно.
     </div>
     """, unsafe_allow_html=True)
 
