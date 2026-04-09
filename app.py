@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 import os
 
-# --- 1. НАСТРОЙКИ СТРАНИЦЫ ---
+# --- 1. CONFIG ---
 st.set_page_config(
     page_title="BeeTracker AI", 
     page_icon="🐝", 
@@ -13,188 +13,125 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. ФУНКЦИЯ СКЛОНЕНИЯ ---
-def get_bee_word(n):
-    if 11 <= n % 100 <= 19:
-        return "особей"
-    last_digit = n % 10
-    if last_digit == 1:
-        return "особь"
-    if 2 <= last_digit <= 4:
-        return "особи"
-    return "особей"
-
-# --- 3. DARK UI/UX DESIGN ---
+# --- 2. УСИЛЕННЫЙ CSS (Анимации, Фон, Шрифты) ---
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800&family=Montserrat:wght@300;400;700&display=swap');
-    header, footer, #MainMenu {visibility: hidden !important;}
+    /* Скрываем служебные элементы Streamlit */
+    header {visibility: hidden !important;}
+    footer {visibility: hidden !important;}
+    div[data-testid="stToolbar"] {display: none !important;}
+    
+    /* Основной шрифт */
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap');
+    html, body, [class*="css"] { font-family: 'Montserrat', sans-serif; }
+
+    /* ФОН С ШЕСТИУГОЛЬНИКАМИ (СОТЫ) */
     .stApp {
-        background-color: #0F172A;
-        background-image: url('https://www.transparenttextures.com/patterns/honey-comb.png');
-        background-attachment: fixed;
-        color: #F8FAFC;
+        background-color: #F8FAFC;
+        background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0Ny44NTgiIHZpZXdCb3g9IjAgMCA0MCA0Ny44NTgiPjxnIGZpbGw9IiNFMEYyRkUiIGZpbGwtb3BhY2l0eT0iMC4zIj48cGF0aCBkPSJNMTAgMjIuNjI0bDEwLTUuNzc0IDEwIDUuNzc0djExLjU0OGwtMTAgNS43NzQtMTAtNS43NzRWMjIuNjI0em0yLDEuMTU0djkuMjRsOCA0LjYxOCA4LTQuNjE4di05LjI0TDQyMzU2LjYzMThNMCAxMS4zMTJsMTAtNS43NzQgMTAsNS43NTR2MTEuNTQ4bC0xMCA1Ljc3NC0xMC01Ljc3NFYxMS4zMTJ6bTIsMS4xNTR2OS4yNEw4MCAyNS4xNzQgMjAtMTIuNDVWMjEuMzFMMjAyMDUuNTRMMTIgMTEuMzEyek0xMCAwVjUuNzc0TDAtLjA1MnYtMTAuMjQ2TDAtNS43NzRWMHoiLz48L2c+PC9zdmc+');
     }
-    .main .block-container { max-width: 1200px; padding: 2rem 1rem !important; }
-    .main-title {
-        font-family: 'Orbitron', sans-serif;
-        font-size: clamp(2rem, 5vw, 3.5rem);
-        color: #2DD4BF;
-        text-transform: uppercase;
-        letter-spacing: 4px;
+
+    /* ЗАГОЛОВОК BeeTracker С АНИМАЦИЕЙ */
+    .beetraker-header {
+        color: #1E293B !important;
+        font-weight: 800 !important;
+        font-size: 3.5rem !important;
+        margin-bottom: 0px !important;
         display: flex;
         align-items: center;
         gap: 15px;
-        text-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
     }
-    .section-header {
-        font-family: 'Orbitron', sans-serif;
-        color: #5EEAD4;
-        letter-spacing: 2px;
-        margin: 3rem 0 1.5rem 0;
-        border-left: 5px solid #2DD4BF;
-        padding-left: 15px;
-        font-size: 1.5rem;
+
+    /* Анимация покачивания пчелы */
+    .swinging-bee {
+        display: inline-block;
+        animation: beeSwing 3s ease-in-out infinite;
+        transform-origin: center bottom;
     }
+    @keyframes beeSwing {
+        0%, 100% { transform: rotate(0deg) translateY(0px); }
+        50% { transform: rotate(7deg) translateY(-5px); }
+    }
+
+    /* Карточки */
     .info-card {
-        background: rgba(30, 41, 59, 0.7);
-        padding: 1.8rem;
-        border-radius: 24px;
-        border: 1px solid rgba(45, 212, 191, 0.1);
-        backdrop-filter: blur(12px);
-        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        border-radius: 20px;
+        border: 1px solid #E2E8F0;
+        border-top: 5px solid #FFB800;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        margin-bottom: 15px;
     }
-    .goal-card {
-        background: linear-gradient(135deg, rgba(45, 212, 191, 0.1), rgba(15, 23, 42, 0.9));
-        padding: 2rem;
-        border-radius: 24px;
-        border: 2px solid #2DD4BF;
-        margin-bottom: 2rem;
+    
+    [data-testid="stMetricValue"] {
+        color: #B45309 !important;
+        font-weight: 800 !important;
     }
-    h3 { color: #5EEAD4 !important; font-size: 1.2rem !important; margin-bottom: 10px !important; }
-    p { color: #CBD5E1; line-height: 1.6; margin: 0; }
-    b { color: #5EEAD4; }
-    div[data-testid="stFileUploadDropzone"] {
-        border: 2px dashed #2DD4BF !important;
-        background: rgba(30, 41, 59, 0.5) !important;
-    }
-    [data-testid="stMetricValue"] { color: #2DD4BF !important; font-family: 'Orbitron', sans-serif; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. БЕЗОПАСНАЯ ЛОГИКА МОДЕЛИ ---
+# --- 3. ЗАГРУЗКА МОДЕЛИ ---
 @st.cache_resource
 def load_model():
-    model_path = "best.pt"
-    if os.path.exists(model_path) and os.path.getsize(model_path) > 0:
-        try:
-            return YOLO(model_path)
-        except Exception:
-            return None
-    return None
+    return YOLO("best.pt")
 
 model = load_model()
 
-# --- 5. ШАПКА ---
-st.markdown("""
-    <div class="main-title">
-        <span style="font-size: 1.2em;">🐝</span> Пчелиный Учёт
+# --- 4. ШАПКА ---
+col_t, col_l = st.columns([4, 1])
+with col_t:
+    # Иконка пчелы покачивается (swinging-bee)
+    st.markdown('<h1 class="beetraker-header"><span class="swinging-bee">🐝</span> BeeTracker</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="font-size: 1.2rem; color: #475569; margin-top: -10px;">Интеллектуальная система мониторинга популяции пчел</p>', unsafe_allow_html=True)
+with col_l:
+    st.markdown("""
+    <div style="background: #FFB800; padding: 10px; border-radius: 50px; text-align: center; font-weight: 800; color: #0F172A; margin-top: 15px;">
+        AI CORE
     </div>
-    <p style="color: #94A3B8; margin-bottom: 2rem;">Интеллектуальный мониторинг экосистемы пасеки</p>
+    """, unsafe_allow_html=True)
+
+st.markdown("---")
+
+# --- 5. ИНТЕРФЕЙС ---
+c_up, c_stat = st.columns([1.6, 1], gap="medium")
+
+with c_up:
+    st.markdown("### 📸 Анализ снимка")
+    file = st.file_uploader("upload", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed")
+
+if file:
+    img = Image.open(file)
+    with st.spinner('Анализ...'):
+        results = model(img)[0]
+        # masks=False убирает синие пятна
+        annotated_img = results.plot(masks=False, kpts=False, probs=False)
+        annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
+        count = len(results.boxes)
     
-    <div class="goal-card">
-        <h3>🎯 Цель проекта</h3>
-        <p>Создание системы автоматического контроля за пчелами, которая помогает вовремя заметить экологическую угрозу и спасти пасеку от гибели.</p>
-    </div>
-""", unsafe_allow_html=True)
-
-# --- 6. АНАЛИЗ ---
-col_up, col_res = st.columns([1.4, 1], gap="large")
-
-with col_up:
-    st.markdown("### 📥 Анализ изображения")
-    file = st.file_uploader("Загрузите фото", type=['jpg', 'png', 'jpeg'], label_visibility="collapsed")
-    if file:
-        img = Image.open(file)
-        if model:
-            with st.spinner('Нейросеть обрабатывает снимок...'):
-                results = model(img)[0]
-                annotated_img = results.plot(labels=True, boxes=True)
-                annotated_img = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2RGB)
-                st.image(annotated_img, use_container_width=True)
-                count = len(results.boxes)
+    with c_up:
+        st.image(annotated_img, use_container_width=True)
+    
+    with c_stat:
+        st.markdown("### 📈 Результат")
+        st.metric(label="🐝 ОБНАРУЖЕНО ПЧЁЛ", value=f"{count}")
+        
+        st.markdown('<div class="info-card">', unsafe_allow_html=True)
+        st.markdown("#### Рекомендация")
+        if count == 0:
+            st.error("Пчёлы не обнаружены.")
+        elif count < 15:
+            st.info("Низкая плотность популяции.")
         else:
-            st.warning("⚠️ Модель не загружена. Проверьте файл 'best.pt'.")
-
-with col_res:
-    if file and model:
-        bee_word = get_bee_word(count)
-        st.metric("ОБНАРУЖЕНО", f"{count} {bee_word}")
-        st.markdown(f"""
-        <div class="info-card">
-            <h3>📊 Текущий отчёт</h3>
-            На снимке зафиксировано <b>{count} {bee_word}</b>.
-        </div>
-        """, unsafe_allow_html=True)
+            st.success("Высокая активность семьи!")
+        st.markdown('</div>', unsafe_allow_html=True)
         
         # Кнопка скачивания
         res_bytes = cv2.imencode('.jpg', cv2.cvtColor(annotated_img, cv2.COLOR_RGB2BGR))[1].tobytes()
-        st.download_button("💾 Сохранить результат", res_bytes, "bee_report.jpg", use_container_width=True)
-    else:
-        st.markdown("""
-        <div style="background: rgba(30, 41, 59, 0.4); padding: 2.5rem; border-radius: 20px; border: 2px dashed rgba(148, 163, 184, 0.2); text-align: center;">
-            <p style="color: #64748B;">Ожидание снимка для запуска детектора</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.download_button("📥 Сохранить", res_bytes, "result.jpg", "image/jpeg")
+else:
+    with c_stat:
+        st.info("👈 Загрузите фото рамки для начала подсчёта.")
 
-# --- 7. О ПРОЕКТЕ ---
-st.markdown('<div class="section-header">🔍 О ПРОЕКТЕ</div>', unsafe_allow_html=True)
-a1, a2 = st.columns(2, gap="medium")
-
-with a1:
-    st.markdown("""
-    <div class="info-card">
-        <h3>Почему это важно?</h3>
-        Пчела летает со скоростью до <b>30 км/ч</b>. Человеческий глаз не способен точно посчитать 50–100 быстро движущихся особей. 
-        Владельцам сотен ульев физически невозможно заглядывать в каждый ежедневно — без автоматизации проблему замечают слишком поздно.
-    </div>
-    """, unsafe_allow_html=True)
-
-with a2:
-    st.markdown("""
-    <div class="info-card">
-        <h3>Как мы это решаем?</h3>
-        Наш проект превращает хаотичное движение пчел в ценные данные. 
-        Используя нейросеть <b>YOLO11</b>, система мгновенно фиксирует активность на летке, заменяя ручной труд точным компьютерным зрением.
-    </div>
-    """, unsafe_allow_html=True)
-
-# --- 8. ПЕРСПЕКТИВЫ ---
-st.markdown('<div class="section-header">🚀 ПЕРСПЕКТИВЫ РАЗВИТИЯ</div>', unsafe_allow_html=True)
-p1, p2, p3 = st.columns(3, gap="medium")
-
-with p1:
-    st.markdown("""
-    <div class="info-card">
-        <h3>Скорость и точность</h3>
-        Оптимизация нейросети для работы на более высоких скоростях и с улучшенной точностью трекинга.
-    </div>
-    """, unsafe_allow_html=True)
-
-with p2:
-    st.markdown("""
-    <div class="info-card">
-        <h3>Мобильное приложение</h3>
-        Разработка версии для смартфонов, чтобы пчеловод мог навести камеру на леток и мгновенно получить отчет.
-    </div>
-    """, unsafe_allow_html=True)
-
-with p3:
-    st.markdown("""
-    <div class="info-card">
-        <h3>Диагностика</h3>
-        Дообучение модели для распознавания разных подвидов пчел и определения признаков болезней.
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("<br><br><p style='text-align: center; color: #475569; font-size: 0.8rem;'>НАУЧНАЯ ВСЕЛЕННАЯ ПЕРВЫХ • 2026</p>", unsafe_allow_html=True)
+st.markdown("<br><br><br>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #94A3B8;'>🪐 Научная вселенная Первых</p>", unsafe_allow_html=True)
