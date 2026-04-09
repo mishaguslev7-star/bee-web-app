@@ -7,23 +7,20 @@ import os
 
 # --- 1. НАСТРОЙКИ СТРАНИЦЫ ---
 st.set_page_config(
-    page_title="BeeTraker AI | Бирюзовый мониторинг", 
+    page_title="BeeTracker AI", 
     page_icon="🐝", 
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. БИРЮЗОВАЯ ТЕМА И ФИКС ИНТЕРФЕЙСА ---
+# --- 2. БИРЮЗОВАЯ ТЕМА + ПЛАВНАЯ АНИМАЦИЯ ---
 st.markdown("""
     <style>
-    /* Прячем служебные элементы Streamlit */
     header {visibility: hidden !important;}
     footer {visibility: hidden !important;}
-    #MainMenu {visibility: hidden !important;}
     div[data-testid="stToolbar"] {display: none !important;}
     .stDeployButton {display:none !important;}
 
-    /* Шрифты и фон */
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
     
     html, body, [class*="css"] {
@@ -31,19 +28,25 @@ st.markdown("""
     }
 
     .stApp {
-        background-color: #F0FDFA; /* Очень легкий бирюзовый оттенок фона */
+        background-color: #F0FDFA;
     }
 
-    /* ФИКС КНОПКИ: убираем черное перекрытие */
+    /* ФИКС КНОПКИ: прозрачный оверлей больше не мешает */
     div[data-testid="stFileUploadDropzone"] {
         background-color: #FFFFFF !important;
         border: 2px dashed #14B8A6 !important;
         border-radius: 20px !important;
         z-index: 100 !important;
         position: relative !important;
+        transition: all 0.3s ease;
+    }
+    div[data-testid="stFileUploadDropzone"]:hover {
+        border-color: #0D9488 !important;
+        background-color: #F9FFFE !important;
+        transform: translateY(-2px);
     }
 
-    /* Заголовки (Цвета: Глубокий бирюзовый #0F766E) */
+    /* Заголовки */
     h1, h2, h3 {
         color: #0F766E !important;
         font-weight: 800 !important;
@@ -53,19 +56,26 @@ st.markdown("""
         font-size: 3.2rem !important;
         border-left: 12px solid #14B8A6;
         padding-left: 1.5rem;
-        margin-bottom: 0.5rem !important;
     }
 
-    /* Карточки-контейнеры */
+    /* АНИМИРОВАННЫЕ КАРТОЧКИ */
     .info-card {
         background: #FFFFFF;
         padding: 1.8rem;
         border-radius: 24px;
         border: 1px solid #CCFBF1;
         border-top: 6px solid #14B8A6;
-        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.1);
+        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.05);
         height: 100%;
         color: #134E4A;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Плавный вылет */
+    }
+
+    .info-card:hover {
+        transform: translateY(-10px); /* Подъем при наведении */
+        box-shadow: 0 15px 30px rgba(20, 184, 166, 0.15);
+        border-color: #5EEAD4;
+        background: #F9FFFE;
     }
 
     /* Метрики */
@@ -80,6 +90,10 @@ st.markdown("""
         padding: 20px !important;
         border-radius: 15px !important;
         border: 1px solid #CCFBF1 !important;
+        transition: transform 0.3s ease;
+    }
+    .stMetric:hover {
+        transform: scale(1.02);
     }
 
     /* Кнопки */
@@ -90,10 +104,11 @@ st.markdown("""
         border: none !important;
         font-weight: 700 !important;
         box-shadow: 0 4px 0 #0F766E !important;
+        transition: all 0.2s ease !important;
     }
-
-    hr {
-        border-top: 1px solid #99F6E4;
+    .stDownloadButton button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 0 #0D9488 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -109,16 +124,17 @@ def load_model():
 model = load_model()
 
 # --- 4. ШАПКА ---
-st.markdown("<p style='color: #0D9488; font-weight: 600; letter-spacing: 2px;'>🪐 НАУЧНАЯ ВСЕЛЕННАЯ ПЕРВЫХ</p>", unsafe_allow_html=True)
+st.markdown("<p style='color: #0D9488; font-weight: 600; letter-spacing: 2px; margin-bottom: 0;'>🪐 НАУЧНАЯ ВСЕЛЕННАЯ ПЕРВЫХ</p>", unsafe_allow_html=True)
 
-col_t, col_l = st.columns([4, 1])
+col_t, col_l = st.columns([4, 1.2])
 with col_t:
-    st.title("БИО-МОНИТОРИНГ")
-    st.markdown("<p style='font-size: 1.2rem; color: #115E59; margin-top: -10px;'>Автоматизированная детекция пчелиных семей на базе YOLO11</p>", unsafe_allow_html=True)
+    # Заменили название на BeeTracker с иконкой
+    st.markdown("<h1>🐝 BeeTracker</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 1.2rem; color: #115E59; margin-top: 5px;'>Интеллектуальная система мониторинга пчелиных семей</p>", unsafe_allow_html=True)
 with col_l:
     st.markdown("""
-    <div style="background: linear-gradient(135deg, #14B8A6, #0D9488); color: white; padding: 12px; border-radius: 15px; text-align: center; font-weight: 800; margin-top: 10px; box-shadow: 0 4px 0 #0F766E;">
-        AI ТРЕКЕР
+    <div style="background: linear-gradient(135deg, #14B8A6, #0D9488); color: white; padding: 12px; border-radius: 15px; text-align: center; font-weight: 800; margin-top: 15px; box-shadow: 0 4px 0 #0F766E;">
+        AI CORE v11
     </div>
     """, unsafe_allow_html=True)
 
@@ -129,7 +145,7 @@ col_up, col_res = st.columns([1.5, 1])
 
 with col_up:
     st.markdown("### 📸 Анализ снимка")
-    file = st.file_uploader("upload", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed", key="bee_uploader_fixed")
+    file = st.file_uploader("upload", type=['jpg', 'jpeg', 'png'], label_visibility="collapsed", key="bt_uploader")
 
 if file is not None and model is not None:
     img = Image.open(file)
@@ -144,58 +160,53 @@ if file is not None and model is not None:
     
     with col_res:
         st.markdown("### 📊 Статистика")
-        st.metric(label="ОБНАРУЖЕНО ПЧЁЛ", value=f"{count} шт.")
+        st.metric(label="ОБНАРУЖЕНО ОСОБЕЙ", value=f"{count}")
         
         st.markdown('<div class="info-card">', unsafe_allow_html=True)
         st.markdown("#### Аналитический вывод")
         if count == 0:
-            st.error("Объекты не обнаружены. Попробуйте другой снимок.")
+            st.error("Пчелы не обнаружены. Проверьте качество фото.")
         elif count < 15:
-            st.warning("⚠️ Низкая активность. Требуется наблюдение.")
+            st.warning("⚠️ Низкая активность. Требуется проверка улья.")
         else:
-            st.success("✅ Семья активна. Показатели в норме.")
+            st.success("✅ Семья в отличной форме. Плотность в норме.")
         st.markdown('</div>', unsafe_allow_html=True)
         
         res_bytes = cv2.imencode('.jpg', cv2.cvtColor(annotated_img, cv2.COLOR_RGB2BGR))[1].tobytes()
-        st.download_button("📥 Сохранить результат", res_bytes, "bee_analysis.jpg", "image/jpeg", use_container_width=True)
-
-elif model is None:
-    st.error("Файл 'best.pt' не найден в корневой папке.")
+        st.download_button("📥 Сохранить отчет", res_bytes, "bee_tracker_result.jpg", "image/jpeg", use_container_width=True)
 else:
     with col_res:
-        st.info("👈 Загрузите фотографию для запуска системы автоматического подсчёта.")
+        st.info("👈 Загрузите фотографию рамки или летка для автоматического подсчёта.")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- 6. ИНФОРМАЦИЯ ИЗ ПРЕЗЕНТАЦИИ ---
-st.header("🔬 ПОДРОБНОСТИ ПРОЕКТА")
+# --- 6. ИНФОРМАЦИОННЫЕ БЛОКИ (С АНИМАЦИЕЙ) ---
+st.header("🔬 О ПРОЕКТЕ")
 c1, c2, c3 = st.columns(3)
 
 with c1:
     st.markdown("""
     <div class="info-card">
-        <h3>💡 Решение</h3>
-        Наш сервис превращает хаотичное движение пчел в ценные данные. Мы используем нейросеть <b>YOLO11</b>, чтобы мгновенно фиксировать до 100 особей на одном кадре.
+        <h3>🚨 Актуальность</h3>
+        Владельцам сотен ульев физически невозможно заглядывать в каждый ежедневно. 
+        <b>BeeTracker</b> позволяет вовремя заметить экологическую угрозу или болезнь.
     </div>
     """, unsafe_allow_html=True)
 
 with c2:
     st.markdown("""
     <div class="info-card">
-        <h3>🛡️ Безопасность</h3>
-        Своевременный учёт позволяет предотвратить <b>Коллапс пчелиных семей</b>. Пчеловод может заметить ослабление колонии на ранней стадии и спасти её.
+        <h3>⚡ Технологии</h3>
+        Пчела движется со скоростью до 30 км/ч. Наш AI на базе <b>YOLO11</b> фиксирует то, что пропускает человеческий глаз, экономя часы ручного труда.
     </div>
     """, unsafe_allow_html=True)
 
 with c3:
     st.markdown("""
     <div class="info-card">
-        <h3>👥 Для кого?</h3>
-        • Пчеловоды и фермеры<br>
-        • Учёные-энтомологи<br>
-        • Экологические организации<br>
-        • Научные институты
+        <h3>🚀 Перспективы</h3>
+        В планах — дообучение модели на распознавание <b>варроатоза</b> и запуск мобильного приложения для работы прямо на пасеке без интернета.
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown("<br><p style='text-align: center; color: #0D9488; opacity: 0.7;'>Всероссийский фестиваль • 2026</p>", unsafe_allow_html=True)
+st.markdown("<br><p style='text-align: center; color: #0D9488; opacity: 0.6;'>BeeTracker • Всероссийский фестиваль 2026</p>", unsafe_allow_html=True)
