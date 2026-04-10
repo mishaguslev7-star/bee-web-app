@@ -151,7 +151,7 @@ model = load_model()
 # --- 5. ШАПКА ---
 st.markdown("""
     <div class="main-title">
-        <span class="swinging-bee" style="font-size: 1.2em;">🐝</span> BeeTracker
+        <span class="swinging-bee" style="font-size: 1.2em;">🐝</span> Пчелиный Учёт
     </div>
     <p style="color: #94A3B8; margin-bottom: 2.5rem; padding-left: 5px; font-size: 1.2rem !important;">Интеллектуальный мониторинг экосистемы пасеки</p>
     
